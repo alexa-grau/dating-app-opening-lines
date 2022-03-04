@@ -28,6 +28,9 @@ http.createServer(function(req, res) {
         return fs.readFile("./public/about.html", (err, data) => handleReadFile(err, data, res));
     } else if(/\/assets\//.test(pathname)) {
         return fs.readFile(`./public/${pathname}`, (err, data) => handleReadFile(err, data, res));
+    } else if("/favicon.ico"){
+        res.writeHead(200, 'OK');
+	    return res.end();
     }
     
     // personalized, all, and user favorites requests
