@@ -3,7 +3,7 @@ const http = require("http");
 const url = require('url');
 
 const allGenerations = require("./allGenerations");
-const personalized = require("./personalizedGPT3");
+// const personalized = require("./personalizedGPT3");
 
 const sessions = {}; // global sessions variable
 
@@ -32,9 +32,12 @@ http.createServer(function(req, res) {
     
     // personalized, all, and user favorites requests
     else if(pathname.startsWith('/openingLines')) {
-        if(pathname==="/openingLines/personalized")
-            personalized.handleRequest(req, res);
-        else{
+        if(pathname==="/openingLines/personalized"){
+            // personalized.handleRequest(req, res)
+            // changes
+            res.writeHead(503, {'Content-Type': 'text/html'});
+	        return res.end("503 Service Unavailable");
+        } else{
             allGenerations.handleRequest(req,res,userSession);
         }
     } else {
