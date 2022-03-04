@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Dating App Opening Line Generator</title>
+        <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css" integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
+        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.8.1/font/bootstrap-icons.css">
+    </head>
+    <body>
+        <nav class="navbar navbar-expand-lg navbar-light bg-light">
+            <a class="navbar-brand" href="#">Dating App Opening Lines</a>
+            <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNavAltMarkup" aria-controls="navbarNavAltMarkup" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNavAltMarkup">
+                <div class="navbar-nav">
+                <a class="nav-item nav-link" href="/">Most Popular</a>
+                <a class="nav-item nav-link" href="/favorites">My Favorites</a>
+                <a class="nav-item nav-link" href="/personalized">Personalized</a>
+                <a class="nav-item nav-link" href="/about">About</a>
+                </div>
+            </div>
+        </nav>
+        <div id="main">
+            <div id="line-card-bodies">
+                <div class="card-body" id="openers-list-1">
+                    <div class="input-group mb-1">
+                        <textarea id="new-textarea" class="form-control alert-danger" aria-label="With textarea" style="resize:none;">NEW!</textarea>
+                        <div class="input-group-append">
+                            <button id="like-generated-btn" type="button" class="btn btn-outline-danger alert-danger like" style="border-color:#f5c6cb;">
+                                <i class="bi bi-heart"></i>
+                            </button>
+                            <button id="dislike-generated-btn" type="button" class="btn btn-outline-danger alert-danger dislike" style="border-color:#f5c6cb;">
+                                <!-- <i class="bi bi-heartbreak"></i> -->
+                                <i class="bi bi-flag"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <div id="line-template" class="input-group mb-1">
+                        <textarea class="form-control" aria-label="With textarea" style="resize:none;"></textarea>
+                        <div class="input-group-append">
+                            <button type="button" class="btn btn-outline-danger like" style="border-color:#ced4da;">
+                                <i class="bi bi-heart"></i>
+                            </button>
+                            <button type="button" class="btn btn-outline-danger dislike" style="border-color:#ced4da;">
+                                <!-- <i class="bi bi-heartbreak"></i> -->
+                                <i class="bi bi-flag"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <script src="http://code.jquery.com/jquery-3.3.1.min.js" integrity="sha256-FgpCb/KJQlLNfOu91ta32o/NMZxltwRo8QtmkMRdAu8="  crossorigin="anonymous"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js" integrity="sha384-ApNbgh9B+Y1QKtv3Rn7W3mgPxhU9K/ScQsAP7hUibX39j7fakFPskvXusvfa0b4Q" crossorigin="anonymous"></script>
+        <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js" integrity="sha384-JZR6Spejh4U02d8jOt6vLEHfe/JQGiRRSQQxSfFWpi1MquVdAyjUar5+76PVCmYl" crossorigin="anonymous"></script>
+        <script type="text/javascript" src="./assets/index.js"></script>
+    </body>
+</html>
