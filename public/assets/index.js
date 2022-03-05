@@ -115,6 +115,10 @@
     });
 
 	$.get("/openingLines/all", function(data) {
+        if(!data) {
+            console.log("No data");
+            return;
+        }
         const openingLines = JSON.parse(data).jsonDatabase;
         let session = JSON.parse(data).session;
         session.likes = new Set(Object.values(session.likes));
