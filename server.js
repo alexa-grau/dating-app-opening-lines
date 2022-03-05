@@ -4,7 +4,8 @@ const personalized = require("./personalizedGPT3");
 const PUBLIC_DIR = './public';
 
 const app = express();
-const port = 8080;
+// const port = 8080; // local
+const port = process.env.PORT;
 let jsonDatabase = require("./database.json");
 let session = {id:0, likes:[], dislikes:[], personalLikes:[]};
 
