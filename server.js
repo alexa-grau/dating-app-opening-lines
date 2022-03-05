@@ -1,5 +1,7 @@
 const express = require('express');
 const path = require('path');
+const bodyParser = require('body-parser');
+const cors = require('cors');
 const personalized = require("./personalizedGPT3");
 const PUBLIC_DIR = './public';
 
@@ -9,6 +11,11 @@ let jsonDatabase = require("./database.json");
 let session = {id:0, likes:[], dislikes:[], personalLikes:[]};
 
 app.use(express.json());
+app.use(express.static(path.join(__dirname, 'client/build')));
+app.use(bodyParser.json());
+app.use(bodyParser.urlencoded({ extended: true }));
+app.use(express.urlencoded())
+app.use(cors())
 
 app.get('/', function(req, res) {
     res.status(200).sendFile(path.join(__dirname, PUBLIC_DIR, '/index.html'));
