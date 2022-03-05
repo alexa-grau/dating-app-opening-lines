@@ -1,3 +1,4 @@
+const crypto = require('crypto');
 const fs = require('fs');
 const http = require("http");
 const url = require('url');
@@ -69,3 +70,12 @@ function getSession(req, res) {
       .reduce((acc, cookie) => cookie[1], "") || generateUniqueId(res);
     return (sessions[userId] = sessions[userId] || { id: userId });
   }
+
+function generateUniqueId(res) {
+    const id = crypto.randomBytes(16).toString("hex");
+    if (sessions[id]) {
+        return generateUniqueId();
+    }
+    res.setHeader("Set-Cookie", [`id=${id}; Path=/`]);
+    return id;
+}
