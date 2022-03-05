@@ -5,9 +5,13 @@
 
     function likeClickHandler(elt, session, key, personal=false){
         elt.find(".like").click(function(){
+            console.log(session);
             // remove elt from page
             elt.remove();
             // remove from session likes
+            session.likes=Array.from(session.likes);
+            session.personalLikes=Array.from(session.personalLikes);
+
             let index = session.likes.indexOf(key);
             if(index>-1) session.likes.splice(index, 1);
 
@@ -28,12 +32,19 @@
                 }
             };
             if(personal) delete jsonData.updatedLikesDislikes;
-            $.post( "/openingLines/user",JSON.stringify(jsonData));
+            $.post({
+                url: '/openingLines/user',
+                contentType: 'application/json',
+                data: JSON.stringify(jsonData),
+                dataType: 'json',
+            });
         });
     }
 
 	$.get("/openingLines/user", function(data) {
-        let session = JSON.parse(data);
+        // let session = JSON.parse(data);
+        let session = data.session;
+        console.log(session);
         if(Object.keys(session.likes).length<1 && Object.keys(session.personalLikes).length<1){
             $("#openers-list").append("<p class='text-centered'>No favorites yet! Once you like opening lines on our homepage, you'll see those lines here.</p>")
         }

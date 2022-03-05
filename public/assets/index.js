@@ -46,7 +46,13 @@
                     changeDislikes: 0
                 }
             });
-            $.post( "/openingLines/all",jsonData);
+            $.post({
+                traditional: true,
+                url: '/openingLines/all',
+                contentType: 'application/json',
+                data: jsonData,
+                dataType: 'json',
+            });
         });
     }
 
@@ -77,7 +83,13 @@
                     changeDislikes: addToDislikes
                 }
             });
-            $.post( "/openingLines/all",jsonData);
+            $.post({
+                traditional: true,
+                url: '/openingLines/all',
+                contentType: 'application/json',
+                data: jsonData,
+                dataType: 'json',
+            });
         });
     }
 
@@ -104,7 +116,13 @@
                     personalLikes: Array.from(session.personalLikes),
                 }
             });
-            $.post( "/openingLines/all",jsonData);
+            $.post({
+                traditional: true,
+                url: '/openingLines/all',
+                contentType: 'application/json',
+                data: jsonData,
+                dataType: 'json',
+            });
         });
     }
 
@@ -119,8 +137,11 @@
             console.log("No data");
             return;
         }
-        const openingLines = JSON.parse(data).jsonDatabase;
-        let session = JSON.parse(data).session;
+
+        // const openingLines = JSON.parse(data).jsonDatabase;
+        // let session = JSON.parse(data).session;
+        const openingLines = data.jsonDatabase;
+        let session = data.session;
         session.likes = new Set(Object.values(session.likes));
         session.dislikes = new Set(Object.values(session.dislikes));
         session.personalLikes = new Set(Object.values(session.personalLikes));

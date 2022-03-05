@@ -1,80 +1,70 @@
-const crypto = require('crypto');
-const fs = require('fs');
-const http = require("http");
-const url = require('url');
+const express = require('express');
+const path = require('path');
+const personalized = require("./personalizedGPT3");
+const PUBLIC_DIR = './public';
 
-const allGenerations = require("./allGenerations");
-// const personalized = require("./personalizedGPT3");
+const app = express();
+const port = 8080;
+let jsonDatabase = require("./database.json");
+let session = {id:0, likes:[], dislikes:[], personalLikes:[]};
 
-const sessions = {}; // global sessions variable
+app.use(express.json());
 
-http.createServer(function(req, res) {
-    const pathname = url.parse(req.url).pathname;
-    let userSession = getSession(req, res);
-    // HTML pages and client-side JS
-    if (pathname === '/') {
-        return fs.readFile("./public/index.html", (err, data) => handleReadFile(err, data, res));
-    } else if (pathname === '/personalized') {
-        switch(req.method){
-            case 'GET':
-                return fs.readFile("./public/personalized.html", (err, data) => handleReadFile(err, data, res));
-            default:
-                res.writeHead(405, {'Content-Type': 'text/html'});
-	            return res.end("405 Method Not Allowed");
+app.get('/', function(req, res) {
+    res.status(200).sendFile(path.join(__dirname, PUBLIC_DIR, '/index.html'));
+});
+
+app.get('/:page', function(req, res) {
+    res.status(200).sendFile(path.join(__dirname, PUBLIC_DIR, `/${req.params.page}.html`));
+});
+
+app.get('/assets/:asset', function(req,res){
+    res.status(200).sendFile(path.join(__dirname, PUBLIC_DIR, `/assets/${req.params.asset}`));
+});
+
+app.get('/openingLines/:lines', function(req,res){
+    if(req.params.lines==='all') res.status(200).json({session, jsonDatabase});
+    else if(req.params.lines==='user') res.status(200).json({session});
+    else if(req.params.lines==='new'){
+        const spawn = require("child_process").spawn;
+        const pythonProcess = spawn('python3',["./helloWorld.py"]);
+        pythonProcess.stdout.on('data', (data) => {
+            cleanedLine = data.toString().replace(/(\r\n|\n|\r|")/gm, "");
+            return res.status(200).send(cleanedLine);
+        });
+    } else res.writeStatus(404);
+});
+
+app.post('/openingLines/:lines', function(req,res){
+    if(req.params.lines==='personalized') personalized.handleRequest(req, res);
+    else if(req.params.lines==='all' || req.params.lines==='user'){
+        if(req.body.session) session = req.body.session;
+        if(req.body.updatedLikesDislikes){
+            jsonDatabase[req.body.updatedLikesDislikes.line].likes += req.body.updatedLikesDislikes.changeLikes;
+            jsonDatabase[req.body.updatedLikesDislikes.line].dislikes += req.body.updatedLikesDislikes.changeDislikes;
         }
-    } else if(pathname === '/favorites'){
-        return fs.readFile("./public/favorites.html", (err, data) => handleReadFile(err, data, res));
-    } else if(pathname === '/about'){
-        return fs.readFile("./public/about.html", (err, data) => handleReadFile(err, data, res));
-    } else if(/\/assets\//.test(pathname)) {
-        return fs.readFile(`./public/${pathname}`, (err, data) => handleReadFile(err, data, res));
-    } else if(pathname==="/favicon.ico"){
-        res.writeHead(200, 'OK');
-	    return res.end();
-    }
-    
-    // personalized, all, and user favorites requests
-    else if(pathname.startsWith('/openingLines')) {
-        if(pathname==="/openingLines/personalized"){
-            // personalized.handleRequest(req, res)
-            // changes
-            res.writeHead(503, {'Content-Type': 'text/html'});
-	        return res.end("503 Service Unavailable");
-        } else{
-            allGenerations.handleRequest(req,res,userSession);
-        }
-    } else {
-        res.writeHead(404, {'Content-Type': 'text/html'});
-	    return res.end("404 Not Found");
-    }
-// }).listen(8080);
-}).listen(process.env.PORT);
+        // memory persistence?
+    } else res.writeStatus(404);
+});
 
-function handleReadFile(err, data, res) {
-    if (err) {
-        res.writeHead(404, {'Content-Type': 'text/html'});
-	    return res.end("404 Not Found");
-    }  
-    // found
-    res.writeHead(200, {'Content-Type': 'text/html'});
-    res.write(data);
-    return res.end(); 
-}
+app.listen(port, ()=>{
+    console.log("Listening on port "+port);
+})
+  
+// function getSession(req, res) {
+//     const clientCookies = req.headers.cookie || "";
+//     const userId = clientCookies.split("; ")
+//       .map(cookie => cookie.split("="))
+//       .filter(cookie => cookie[0] === "id")
+//       .reduce((acc, cookie) => cookie[1], "") || generateUniqueId(res);
+//     return (sessions[userId] = sessions[userId] || { id: userId });
+//   }
 
-function getSession(req, res) {
-    const clientCookies = req.headers.cookie || "";
-    const userId = clientCookies.split("; ")
-      .map(cookie => cookie.split("="))
-      .filter(cookie => cookie[0] === "id")
-      .reduce((acc, cookie) => cookie[1], "") || generateUniqueId(res);
-    return (sessions[userId] = sessions[userId] || { id: userId });
-  }
-
-function generateUniqueId(res) {
-    const id = crypto.randomBytes(16).toString("hex");
-    if (sessions[id]) {
-        return generateUniqueId();
-    }
-    res.setHeader("Set-Cookie", [`id=${id}; Path=/`]);
-    return id;
-}
+// function generateUniqueId(res) {
+//     const id = crypto.randomBytes(16).toString("hex");
+//     if (sessions[id]) {
+//         return generateUniqueId();
+//     }
+//     res.setHeader("Set-Cookie", [`id=${id}; Path=/`]);
+//     return id;
+// }
