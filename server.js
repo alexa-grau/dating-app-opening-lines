@@ -4,8 +4,7 @@ const personalized = require("./personalizedGPT3");
 const PUBLIC_DIR = './public';
 
 const app = express();
-// const port = 8080; // local
-const port = process.env.PORT;
+const PORT = process.env.PORT || 8080;
 let jsonDatabase = require("./database.json");
 let session = {id:0, likes:[], dislikes:[], personalLikes:[]};
 
@@ -16,6 +15,7 @@ app.get('/', function(req, res) {
 });
 
 app.get('/:page', function(req, res) {
+    if(req.params.page==='favicon.ico') return res.status(200);
     res.status(200).sendFile(path.join(__dirname, PUBLIC_DIR, `/${req.params.page}.html`));
 });
 
@@ -45,15 +45,15 @@ app.post('/openingLines/:lines', function(req,res){
             jsonDatabase[req.body.updatedLikesDislikes.line].dislikes += req.body.updatedLikesDislikes.changeDislikes;
         }
         // memory persistence?
-    } else res.writeStatus(404);
+    } else res.status(404);
 });
 
-app.get('/favicon.ico', function(req,res){
-    res.writeStatus(200);
-})
+// app.get('/favicon.ico', function(req,res){
+//     return res.status(200);
+// })
 
-app.listen(port, ()=>{
-    console.log("Listening on port "+port);
+app.listen(PORT, ()=>{
+    console.log("Listening on port "+PORT);
 })
   
 // function getSession(req, res) {
