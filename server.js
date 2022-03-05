@@ -48,6 +48,10 @@ app.post('/openingLines/:lines', function(req,res){
     } else res.writeStatus(404);
 });
 
+app.get('/favicon.ico', function(req,res){
+    res.writeStatus(200);
+})
+
 app.listen(port, ()=>{
     console.log("Listening on port "+port);
 })
