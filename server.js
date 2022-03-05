@@ -11,7 +11,6 @@ const sessions = {}; // global sessions variable
 http.createServer(function(req, res) {
     const pathname = url.parse(req.url).pathname;
     let userSession = getSession(req, res);
-
     // HTML pages and client-side JS
     if (pathname === '/') {
         return fs.readFile("./public/index.html", (err, data) => handleReadFile(err, data, res));
@@ -29,7 +28,7 @@ http.createServer(function(req, res) {
         return fs.readFile("./public/about.html", (err, data) => handleReadFile(err, data, res));
     } else if(/\/assets\//.test(pathname)) {
         return fs.readFile(`./public/${pathname}`, (err, data) => handleReadFile(err, data, res));
-    } else if("/favicon.ico"){
+    } else if(pathname==="/favicon.ico"){
         res.writeHead(200, 'OK');
 	    return res.end();
     }
@@ -48,8 +47,8 @@ http.createServer(function(req, res) {
         res.writeHead(404, {'Content-Type': 'text/html'});
 	    return res.end("404 Not Found");
     }
-// });
-}).listen(process.env.PORT);
+}).listen(8080);
+// }).listen(process.env.PORT);
 
 function handleReadFile(err, data, res) {
     if (err) {

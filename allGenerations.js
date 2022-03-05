@@ -3,9 +3,11 @@ const jsonDatabase = require(FILENAME);
 const fs = require('fs');
 
 function handleRequest(req, res, session){
+    console.log("Handle request");
     if(req.url==="/openingLines/all"){
         switch(req.method){
             case "GET":
+                console.log("Get all");
                 fs.readFile(`./sessions/${session.id}`, (err, data) => {
                     // get file session content
                     let fileSession = null;
@@ -34,6 +36,7 @@ function handleRequest(req, res, session){
                             personalLikes: Array.from(session.personalLikes),
                         }
                     });
+                    console.log("Sending", jsonObj);
                     return res.end(jsonObj);
                 });
                 break;
