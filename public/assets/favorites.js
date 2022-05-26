@@ -5,7 +5,6 @@
 
     function likeClickHandler(elt, session, key, personal=false){
         elt.find(".like").click(function(){
-            console.log(session);
             // remove elt from page
             elt.remove();
             // remove from session likes
@@ -44,7 +43,6 @@
 	$.get("/openingLines/user", function(data) {
         // let session = JSON.parse(data);
         let session = data.session;
-        console.log(session);
         if(Object.keys(session.likes).length<1 && Object.keys(session.personalLikes).length<1){
             $("#openers-list").append("<p class='text-centered'>No favorites yet! Once you like opening lines on our homepage, you'll see those lines here.</p>")
         }

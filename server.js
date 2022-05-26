@@ -3,19 +3,19 @@ const path = require('path');
 const bodyParser = require('body-parser');
 const cors = require('cors');
 const personalized = require("./personalizedGPT3");
+const googleCloud = require("./googleCloud");
 const PUBLIC_DIR = './public';
 
 const app = express();
 const PORT = process.env.PORT || 8080;
-let jsonDatabase = require("./database.json");
-let session = {id:0, likes:[], dislikes:[], personalLikes:[]};
+let session = {id:0, lines:[], profiles:[]};
 
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'client/build')));
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 // app.use(express.urlencoded())
-app.use(cors())
+app.use(cors());
 
 app.get('/', function(req, res) {
     res.status(200).sendFile(path.join(__dirname, PUBLIC_DIR, '/index.html'));
@@ -23,60 +23,56 @@ app.get('/', function(req, res) {
 
 app.get('/:page', function(req, res) {
     if(req.params.page==='favicon.ico') return res.status(200);
-    res.status(200).sendFile(path.join(__dirname, PUBLIC_DIR, `/${req.params.page}.html`));
+    res.status(200).sendFile(path.join(__dirname, PUBLIC_DIR, `/${req.params.page}.html`), null, function(err){
+        if(err && err.code==='ENOENT'){
+            res.status(404).sendFile(path.join(__dirname, PUBLIC_DIR, `/404.html`));
+        }
+    });
 });
 
 app.get('/assets/:asset', function(req,res){
     res.status(200).sendFile(path.join(__dirname, PUBLIC_DIR, `/assets/${req.params.asset}`));
 });
 
-app.get('/openingLines/:lines', function(req,res){
-    if(req.params.lines==='all') res.status(200).json({session, jsonDatabase});
-    else if(req.params.lines==='user') res.status(200).json({session});
-    else if(req.params.lines==='new'){
-        const spawn = require("child_process").spawn;
-        const pythonProcess = spawn('python3',["./helloWorld.py"]);
-        pythonProcess.stdout.on('data', (data) => {
-            cleanedLine = data.toString().replace(/(\r\n|\n|\r|")/gm, "");
-            return res.status(200).send(cleanedLine);
-        });
-    } else res.writeStatus(404);
-});
+app.get('/user/saved', function(req, res){
+    res.json(session);
+})
 
-app.post('/openingLines/:lines', function(req,res){
-    if(req.params.lines==='personalized') personalized.handleRequest(req, res);
-    else if(req.params.lines==='all' || req.params.lines==='user'){
-        if(req.body.session) session = req.body.session;
-        if(req.body.updatedLikesDislikes){
-            jsonDatabase[req.body.updatedLikesDislikes.line].likes += req.body.updatedLikesDislikes.changeLikes;
-            jsonDatabase[req.body.updatedLikesDislikes.line].dislikes += req.body.updatedLikesDislikes.changeDislikes;
+app.post('/user/saved', function(req, res){
+    if(req.body.content){
+        let tempSet;
+        if(req.body.content=='profile'){
+            tempSet = [... new Set(req.body.newArr.concat(session.profiles))];
+            session.profiles = Array.from(tempSet);
+        } else if(req.body.content=='opening-line'){
+            tempSet = [... new Set(req.body.newArr.concat(session.lines))];
+            session.lines = Array.from(tempSet);
+        } else if(req.body.content=='saved') {
+            session.profiles = req.body.newLikedProfiles;
+            session.lines = req.body.newLikedLines;
+        } else {
+            console.log(`Idk how to save ${req.body.content}`);
         }
-        // memory persistence?
-    } else res.status(404);
+    }
 });
 
-// app.get('/favicon.ico', function(req,res){
-//     return res.status(200);
-// })
+app.post('/gpt3/:content', function(req, res){
+    personalized.handleRequest(req, res, session);
+});
+
+app.post('/image', function(req, res){
+    // get image labels from Google vision
+});
+
+app.post('/sentiment', function(req, res){
+    googleCloud.analyzeSentiment(req.body.text, res);
+});
+
+// ALWAYS stay at bottom, 404 catch all
+app.get('*', function(req, res){
+    res.status(404).sendFile(path.join(__dirname, PUBLIC_DIR, `/404.html`));
+});
 
 app.listen(PORT, ()=>{
     console.log("Listening on port "+PORT);
-})
-  
-// function getSession(req, res) {
-//     const clientCookies = req.headers.cookie || "";
-//     const userId = clientCookies.split("; ")
-//       .map(cookie => cookie.split("="))
-//       .filter(cookie => cookie[0] === "id")
-//       .reduce((acc, cookie) => cookie[1], "") || generateUniqueId(res);
-//     return (sessions[userId] = sessions[userId] || { id: userId });
-//   }
-
-// function generateUniqueId(res) {
-//     const id = crypto.randomBytes(16).toString("hex");
-//     if (sessions[id]) {
-//         return generateUniqueId();
-//     }
-//     res.setHeader("Set-Cookie", [`id=${id}; Path=/`]);
-//     return id;
-// }
+});

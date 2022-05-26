@@ -17,7 +17,7 @@ function createPrompt(obj){
     return filter.clean("Write a dating app pickup line."+extraInfo);
 }
 
-function openAIOptions(specialinfo, temp, userID){
+function openAIOptions(specialinfo, temp, userID="test"){
     if(temp<0 || temp>1){
         temp=0.5;
     }
@@ -26,7 +26,7 @@ function openAIOptions(specialinfo, temp, userID){
         temperature: temp,
         max_tokens: 280/4,
         top_p: 1,
-        best_of: 3,
+        // best_of: 3,
         frequency_penalty: 0.5,
         presence_penalty: 0.5,
         stop: ["You:", "What's your name"],
@@ -68,22 +68,22 @@ function processAllCombos(interestString, standoutString){
     
         specialInfoOptions[JSON.stringify({"interests":randomInterest, "standOuts":randomStandOut})]=0;
     }
-
     return specialInfoOptions;
 }
 
 function loadRandomOptions(numLines, options){
     let specialInfoToUse = []
     let optionsArr = Object.keys(options);
+    let optionsCounter = optionsArr.length-1;
     while(specialInfoToUse.length<numLines){
-        if(optionsArr.length===0) break;
-        info = optionsArr.splice(Math.floor(Math.random()*options.length), 1)[0];
-        if(info) specialInfoToUse.push(JSON.parse(info));
+        if(optionsCounter<0) optionsCounter = optionsArr.length-1;
+        info = JSON.parse(optionsArr[optionsCounter--]);
+        if(info.interests || info.standOuts) specialInfoToUse.push(info);
     }
     return specialInfoToUse;
 }
 
-function getPersonalizedLines(numLines, temp=0.5, interestString="", standoutString="", set, userID){
+function getPersonalizedLines(numLines, temp=0.5, lineInfo, set, userID){
     if(numLines==0){
         return Promise.resolve(set);
     } else {
@@ -91,53 +91,98 @@ function getPersonalizedLines(numLines, temp=0.5, interestString="", standoutStr
             apiKey: process.env.OPENAI_API_KEY,
         });
         const openai = new OpenAIApi(configuration);
-        const combos = processAllCombos(interestString, standoutString);
-        const lineInfo = loadRandomOptions(numLines,combos);
 
-        return openAICall(openai, "text-davinci-001",openAIOptions(lineInfo[numLines-1], temp, userID)).then(function(response){
+        return openAICall(openai, "text-davinci-001",openAIOptions(lineInfo[numLines-1], temp)).then(function(response){
             set.add(response);
-            return getPersonalizedLines(numLines-1, temp, interestString, standoutString, set);
+            return getPersonalizedLines(numLines-1, temp, lineInfo, set);
+        });
+    }
+}
+
+// For profiles and more, prompt created on front end
+function getResponsesFromPrompt(numLines, temp=0.5, prompt="", set){
+    if(numLines==0){
+        return Promise.resolve(set);
+    } else {
+        const configuration = new Configuration({
+            apiKey: process.env.OPENAI_API_KEY,
+        });
+        const openai = new OpenAIApi(configuration);
+        let tokens = 280/4;
+        let freqPen=0.5, presencePen=0.5, topP=1;
+        if(numLines==1){
+            // more like this numbers
+            tokens = 256;
+            freqPen=2;
+            presencePen=2;
+            topP=0.43;
+        }
+        const promptObj = {
+            prompt: prompt,
+            temperature: temp,
+            max_tokens: tokens,
+            top_p: topP,
+            frequency_penalty: freqPen,
+            presence_penalty: presencePen,
+        };
+
+        return openAICall(openai, "text-davinci-001",promptObj).then(function(response){
+            set.add(response);
+            return getResponsesFromPrompt(numLines-1, temp, prompt, set);
         });
     }
 }
 
 function handleRequest(req, res, session){
-    switch(req.method){
-        // case "GET":
-        //     // let responses = {"responses": []};
-        //     res.writeHead(200, 'OK'); // only for now
-        //     return res.end();
-        case "POST":
-            let responses = {"responses": []};
-            return convertRequest(req, data => {
-                let set = new Set();
-                return getPersonalizedLines(5, data.temperature, data.interests, data.standOuts, set, session.id).then(function(response){
-                    if(set.size>0) responses.responses=Array.from(set);
-                    res.writeHead(200, {'Content-Type': 'application/json'});
-                    return res.end(JSON.stringify(responses));
-                }).catch(function(err){
-                    console.log(err);
-                });
+    if(req.method !== "POST"){
+        // probs redundant since server only calls from post, but figured it's worth adding
+        res.writeHead(405, {'Content-Type': 'text/html'});
+        return res.end("405 Method Not Allowed");
+    }
+    let responses = {"responses": []};
+    let set = new Set();
+    switch(req.params.content){
+        case "opening-lines":
+            responses = {"responses": []};
+            set = new Set();
+            const combos = processAllCombos(req.body.interests, req.body.standOuts);
+            const lineInfo = loadRandomOptions(5,combos);
+            return getPersonalizedLines(5, req.body.temperature, lineInfo, set, session.id).then(function(response){
+                if(set.size>0) responses.responses=Array.from(set);
+                res.writeHead(200, {'Content-Type': 'application/json'});
+                return res.end(JSON.stringify(responses));
+            }).catch(function(err){
+                console.log(err);
+            });
+        case "profile":
+            responses = {"responses": []};
+            set = new Set();
+            // this should work assuming I successfully adapted getPersonalizedLines
+            return getResponsesFromPrompt(5, 0.7, req.body.prompt, set).then(function(response){
+                if(set.size>0) responses.responses=Array.from(set);
+                res.writeHead(200, {'Content-Type': 'application/json'});
+                return res.end(JSON.stringify(responses));
+            }).catch(function(err){
+                console.log(err);
+            });
+        case "more":
+            responses = {"responses": []};
+            set = new Set();
+            // this should work assuming I successfully adapted getPersonalizedLines
+            return getResponsesFromPrompt(1, 0.7, req.body.prompt, set).then(function(response){
+                if(set.size>0) responses.responses=Array.from(set);
+                res.writeHead(200, {'Content-Type': 'application/json'});
+                return res.end(JSON.stringify(responses));
+            }).catch(function(err){
+                console.log(err);
             });
         default:
-            res.writeHead(405, {'Content-Type': 'text/html'});
-            return res.end("405 Method Not Allowed");
+            res.writeHead(404, {'Content-Type': 'text/html'});
+            return res.end("404 Not Found");
     }
 }
-
-function convertRequest(req, callback) {
-    let data = "";
-    req.on('data', chunk => {
-      data += chunk.toString();
-    });
-    req.on('end', () => {
-      callback(JSON.parse(data));
-    });
-  }
 
 module.exports = {
     getPersonalizedLines,
     handleRequest
 }
-
-// getPersonalizedLines();
